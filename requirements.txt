@@ -1,5 +1,0 @@
-impedance
-matplotlib
-numpy
-pandas
-scipy
