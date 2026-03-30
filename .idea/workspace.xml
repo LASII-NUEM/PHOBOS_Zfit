@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="81cf483c-1d35-45f8-91e7-d546315e6e0a" name="Changes" comment="[framework] Handling EIS data" />
+    <list default="true" id="81cf483c-1d35-45f8-91e7-d546315e6e0a" name="Changes" comment="[framework] Handling EIS data">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -20,15 +22,21 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/EvertonTrentoJR/EIS_fit_PPGQ.git",
-    "accountId": "2c6098e6-f698-4ae4-ae0f-9b98d0a3d6ec"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;EvertonTrentoJR&quot;
   }
-}]]></component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/EvertonTrentoJR/EIS_fit_PPGQ.git&quot;,
+    &quot;accountId&quot;: &quot;2c6098e6-f698-4ae4-ae0f-9b98d0a3d6ec&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="3BdVz7DXQZeXPHJBKS8D2FEqn17" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -36,11 +44,13 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Python.linKK.executor": "Debug",
     "Python.read_plot_impedance_data.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "master",
     "last_opened_file_path": "C:/Users/Everton/PycharmProjects/EIS_fit_PPGQ/Data/Data_PPGQ_test",
     "node.js.detected.package.eslint": "true",
@@ -75,7 +85,8 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1764110404779</updated>
-      <workItem from="1774819194156" duration="8853000" />
+      <workItem from="1774819194156" duration="8912000" />
+      <workItem from="1774828540394" duration="471000" />
     </task>
     <task id="LOCAL-00001" summary="[framework] Handling EIS data">
       <option name="closed" value="true" />
@@ -93,7 +104,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774828331163</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="[framework] Handling EIS data">
+      <option name="closed" value="true" />
+      <created>1774828474144</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1774828474144</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
