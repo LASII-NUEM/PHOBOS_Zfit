@@ -38,6 +38,8 @@ class LinearKramersKronig:
         self.rms_rel_re = np.sqrt(np.mean( self.res_real ** 2))
         self.rms_rel_im = np.sqrt(np.mean( self.res_imag ** 2))
 
+        #residue test < 1%
+
         self.plotLinkk()
 
         if verbose:
