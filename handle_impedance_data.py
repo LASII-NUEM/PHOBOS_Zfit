@@ -51,9 +51,14 @@ freqs = spec_obj.freq
 z_real = spec_obj.Z_real
 z_imag = -spec_obj.Z_imag #imaginary impedance is negative
 
+Z_real = np.asarray(z_real, dtype=float)
+Z_imag = np.asarray(z_imag, dtype=float)
+Z_mag = np.sqrt(Z_real**2 + Z_imag**2)
+Z_phase = np.degrees(np.arctan2(Z_imag, Z_real))
+
 #_______________________
 # PLOT DATA
-'''label=["65 10 umolL - Pb S25", "65 10 umolL - Cd S15", "65 10 umolL - Hg S8", "65 Tampão Hh S1"]
+label=["65 10 umolL - Pb S25", "65 10 umolL - Cd S15", "65 10 umolL - Hg S8", "65 Tampão Hh S1"]
 fig = plt.figure(figsize=(8,6))
 for i in range(len(z_real[:,0])):
     plt.plot(z_real[i,:], z_imag[i,:], label=label[i])
@@ -63,11 +68,6 @@ plt.xlabel("Z''")
 plt.legend(loc='upper right')
 plt.grid(True)
 plt.tight_layout()
-
-Z_real = np.asarray(z_real, dtype=float)
-Z_imag = np.asarray(z_imag, dtype=float)
-Z_mag = np.sqrt(Z_real**2 + Z_imag**2)
-Z_phase = np.degrees(np.arctan2(Z_imag, Z_real))
 
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6))
 fig.suptitle('Impedance Data')
@@ -100,7 +100,7 @@ plt.show()
 linkk_obj = linKK.LinearKramersKronig(spec_obj, c=0.1, max_iter=50, add_capacitor=True, verbose=True)
 if linkk_obj.chi_square > 1e-2:
     raise ValueError(f'Linear Kramers-Kronig test failed: x² = {linkk_obj.chi_square}')
-'''
+
 #_______________________________________________________________________________________________________________________
 # Defining the fitting parameters from the choosen Electric Circuit Model (ECM)
 # write the circuit as text
@@ -140,8 +140,7 @@ print(ECM_Params.param_names[:])
 #     "alpha2": 0.8,
 # }
 
-param_value = np.array([100.0,100.0,2e-4 ,0.8,100.0,2e-4 ,0.8,])
-
+param_value = np.array([100.0,100.0,2e-4 ,0.8,100.0,2e-4 ,0.8])
 ECM_Z = ECM_utils.CircuitEvaluate(freqs, ECM_Params, param_value, verbose=True)
 
 #_______________________________________________________________________________________________________________________
@@ -151,53 +150,62 @@ ECM_Z = ECM_utils.CircuitEvaluate(freqs, ECM_Params, param_value, verbose=True)
 ECM_fit = fitting_utils.Circuit_fitting(spec_obj,freqs,ECM_Params)
 
 initial_params = np.array([1,1,1,1,1,1,1])
-scaling_array = np.array([1e3, 1e-7, 1e6, 1e-2, 1e4, 1e-1, 1])
-ECM_fit_params = ECM_fit.fit_circuit(initial_params, scaling_array, method="BFGS", verbose=True)
+scaling_array = np.array([1e3, 1e3, 1e-5, 1, 1e3, 1e-5, 1])
+ECM_BFGS_params = ECM_fit.fit_circuit(initial_params, scaling_array, method="BFGS", verbose=True)
+ECM_NLLS_params = ECM_fit.fit_circuit(initial_params, scaling_array, method="NLLS", verbose=True)
 
 #________________________
 # Plot fitting result
-# plot
-fig, ax = plt.subplots()
-leg = []
-ax.scatter(fit_obj.z_meas_real, fit_obj.z_meas_imag, marker='o', color="tab:blue")
-leg.append('ice measured')
-ax.plot(fit_params.opt_fit.real, -fit_params.opt_fit.imag, color="tab:orange")
-leg.append('Longo2020')
-x1, x2, y1, y2 = -1000, 20000, 1000, 12000
-axins = ax.inset_axes([0.5, 0.18, 0.4, 0.4],
-                      xlim=(x1, x2), ylim=(y1, y2))
-axins.scatter(fit_obj.z_meas_real, fit_obj.z_meas_imag, marker='o', color="tab:blue")
-axins.plot(fit_params.opt_fit.real, -fit_params.opt_fit.imag, color="tab:orange")
-#axins.grid()
-ax.indicate_inset_zoom(axins, edgecolor="black", linewidth=1.5)
-plt.xlabel("Z'")
-plt.ylabel("Z''")
-plt.legend(leg)
-plt.grid()
-plt.show()
 
-plt.figure()
-plt.subplot(1,2,1)
-leg = []
-plt.scatter(np.log10(spec_ice_obj.freqs), np.abs(fit_obj.z_meas))
-leg.append('ice measured')
-plt.plot(np.log10(spec_ice_obj.freqs), np.abs(fit_params.opt_fit), color="tab:orange")
-leg.append('Longo2020')
-plt.ylabel("|Z|")
-plt.xlabel("log(Frequency)")
-plt.legend(leg)
-plt.grid()
+Z_bfgs = ECM_BFGS_params.opt_fit
+Z_nlls = ECM_NLLS_params.opt_fit
 
-plt.subplot(1,2,2)
-leg = []
-plt.scatter(np.log10(spec_ice_obj.freqs), -np.angle(fit_obj.z_meas.astype('complex')))
-leg.append('ice measured')
-plt.plot(np.log10(spec_ice_obj.freqs), -np.angle(fit_params.opt_fit), color="tab:orange")
-leg.append('Longo2020')
-plt.ylabel("-∠Z")
-plt.xlabel("log(Frequency)")
-plt.legend(leg)
-plt.grid()
+for i in range(len(z_real[:,0])):
+    fig, ax = plt.subplots(figsize=(12,10))
+    plt.title(f'[Nyquist] BFGS/NLLS Fit: {spec_obj.sheet_names[i]}')
+    leg = []
+    ax.scatter(Z_bfgs[i].Z_ECM.real, -Z_bfgs[i].Z_ECM.imag, marker='o', color="tab:blue")
+    leg.append('BFGS Fit')
+    ax.scatter(Z_nlls[i].Z_ECM.real, -Z_nlls[i].Z_ECM.imag, marker='s', color="tab:red")
+    leg.append('NLLS Fit')
+    ax.plot(z_real[i,:], z_imag[i,:], color="tab:orange")
+    leg.append('Raw Data')
+
+    plt.xlabel("Z'")
+    plt.ylabel("Z''")
+    plt.legend(leg)
+    plt.grid()
+    plt.show()
+
+    plt.figure(figsize=(12,10))
+    plt.subplot(1,2,1)
+    plt.title(f'[Bode] BFGS/NLLS Fit: {spec_obj.sheet_names[i]}')
+    leg = []
+    plt.scatter(freqs, np.abs(Z_bfgs[i].Z_ECM), marker='o', color="tab:blue")
+    leg.append('BFGS Fit'),
+    plt.scatter(freqs, np.abs(Z_nlls[i].Z_ECM),marker='s', color="tab:red")
+    leg.append('NLLS Fit')
+    plt.plot(freqs, Z_mag[i,:], color="tab:orange")
+    leg.append('Raw Data')
+    plt.ylabel("|Z|")
+    plt.xlabel("log(Frequency)")
+    plt.legend(leg)
+    plt.grid()
+
+    plt.subplot(1,2,2)
+    plt.title(f'[Phase] BFGS/NLLS Fit: {spec_obj.sheet_names[i]}')
+    leg = []
+    plt.scatter(freqs, -np.angle(Z_bfgs[i].Z_ECM), marker='o', color="tab:blue")
+    leg.append('BFGS Fit'),
+    plt.scatter(freqs,-np.angle(Z_nlls[i].Z_ECM),marker='s', color="tab:red")
+    leg.append('NLLS Fit')
+    plt.plot(freqs, Z_phase[i,:], color="tab:orange")
+    leg.append('Raw Data')
+    plt.ylabel("-∠Z")
+    plt.xlabel("log(Frequency)")
+    plt.legend(leg)
+    plt.grid()
+    plt.show()
 
 # _______________________________________________________________________________________________________________________
 # Evaluate Prof. Paula new tests

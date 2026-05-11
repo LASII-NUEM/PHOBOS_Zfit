@@ -5,16 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="81cf483c-1d35-45f8-91e7-d546315e6e0a" name="Changes" comment="commit that shit">
-      <change afterPath="$PROJECT_DIR$/data/Dados Everton.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/handle_impedance_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/handle_impedance_data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/ECM_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/ECM_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/data_types.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/data_types.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/equivalent_circuit.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/file_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/file_utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils/fitting_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/fitting_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/linKK.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/linKK.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -233,7 +225,7 @@
       <workItem from="1778349631427" duration="878000" />
       <workItem from="1778421303659" duration="229000" />
       <workItem from="1778421958954" duration="13957000" />
-      <workItem from="1778441905409" duration="12542000" />
+      <workItem from="1778441905409" duration="16467000" />
     </task>
     <task id="LOCAL-00001" summary="[framework] Handling EIS data">
       <option name="closed" value="true" />
@@ -299,7 +291,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778349654437</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="commit that shit">
+      <option name="closed" value="true" />
+      <created>1778454621680</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1778454621680</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -337,7 +337,7 @@
     <SUITE FILE_PATH="coverage/EIS_fit_PPGQ$ECM_param__1_.coverage" NAME="ECM_param (1) Coverage Results" MODIFIED="1776638553563" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/utils" />
     <SUITE FILE_PATH="coverage/EIS_fit_PPGQ$fitting_utils.coverage" NAME="fitting_utils Coverage Results" MODIFIED="1778453098419" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/utils" />
     <SUITE FILE_PATH="coverage/EIS_fit_PPGQ$read_plot_impedance_data.coverage" NAME="read_plot_impedance_data Coverage Results" MODIFIED="1774827802734" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/EIS_fit_PPGQ$handle_impedance_data.coverage" NAME="handle_impedance_data Coverage Results" MODIFIED="1778453133956" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/EIS_fit_PPGQ$handle_impedance_data.coverage" NAME="handle_impedance_data Coverage Results" MODIFIED="1778457509370" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/EIS_fit_PPGQ$linKK.coverage" NAME="linKK Coverage Results" MODIFIED="1774826849116" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/utils" />
     <SUITE FILE_PATH="coverage/EIS_fit_PPGQ$t.coverage" NAME="t Coverage Results" MODIFIED="1776650030319" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
