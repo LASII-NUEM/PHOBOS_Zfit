@@ -72,6 +72,7 @@ class Circuit_fitting:
         #validate "scaling_array"
         if len(scaling_array) != len(initial_guess):
             raise ValueError(f'[EquivalentCircuit] Length of the scaling array do not match the length of the initial guess! {len(scaling_array)} != {len(initial_guess)}')
+        self.scaling = scaling_array
 
         if not isinstance(scaling_array, np.ndarray):
             raise TypeError(f'[EquivalentCircuit] "scaling_array" must be a Numpy Array! Curr. type = {type(scaling_array)}')
@@ -85,7 +86,7 @@ class Circuit_fitting:
                 t_init = time.time()
                 min_obj = minimize(self.CUMSE, initial_guess, args=([z_raw, self.freqs, scaling_array]), bounds=bounds, method='L-BFGS-B')
                 t_elapsed = time.time() - t_init
-                opt_fit = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, min_obj.x, verbose=False)
+                opt_fit = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, min_obj.x, self.scaling, verbose=False)
                 Z_fit = opt_fit.Z_ECM
                 opt_params_scaled = min_obj.x*scaling_array #rescale the minimized parameters
                 nmse = self.NMSE(z_raw.astype("complex"), Z_fit.astype('complex')) #NMSE score for both complex parts
@@ -134,7 +135,7 @@ class Circuit_fitting:
                 ls_obj = least_squares(self.CUMSE, x0=initial_guess, args=([[self.z_meas, self.freqs, scaling_array]]),
                                        bounds=bounds, max_nfev=5000)  # Trust-Region-based NLLS
                 t_elapsed = time.time() - t_init
-                opt_fit = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, ls_obj.x, verbose=False)
+                opt_fit = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, ls_obj.x, self.scaling, verbose=False)
                 Z_fit = opt_fit.Z_ECM
                 opt_params_scaled = ls_obj.x*scaling_array #rescale the minimized parameters
                 nmse = self.NMSE(z_raw.astype("complex"), Z_fit.astype("complex")) #NMSE score for both complex parts
@@ -180,7 +181,7 @@ class Circuit_fitting:
         :return: the mean squared error between the measured and fitted impedance values
         '''
 
-        ecm_hat = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, theta, verbose=False)
+        ecm_hat = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, theta, self.scaling, verbose=False)
         z_hat = ecm_hat.Z_ECM
         z_hat = z_hat.astype('complex')
         args[0] = args[0].astype('complex')

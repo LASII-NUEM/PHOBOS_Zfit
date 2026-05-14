@@ -169,7 +169,7 @@ class CircuitParams:
             self.bound.append(bds)
 
 class CircuitEvaluate:
-    def __init__(self, freqs: np.ndarray, ecm , params_value: np.ndarray, verbose:bool=False):
+    def __init__(self, freqs: np.ndarray, ecm , params_value: np.ndarray,scaling:  np.ndarray, verbose:bool=False):
         '''
 
         :param freqs: list of frequencies
@@ -180,9 +180,16 @@ class CircuitEvaluate:
         self.ecm = ecm
         self.circuit = self.ecm.circuit
         self.verbose = verbose
+        self.scaling = scaling
         self.params_value = params_value
+
+        self.params_scaled = np.asarray(self.params_value)
+
+        for i in range(len(self.params_value)):
+            self.params_scaled[i] = self.params_value[i]*self.scaling[i]
+
         self.param_names = self.ecm.param_names
-        self.params =dict(zip(self.param_names, self.params_value))
+        self.params =dict(zip(self.param_names, self.params_scaled))
 
         self.Freqs = np.asarray(freqs, dtype=float)
         self.W = 2 * np.pi * self.Freqs

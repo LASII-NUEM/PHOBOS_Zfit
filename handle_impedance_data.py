@@ -119,7 +119,8 @@ print(ECM_Params.param_names[:])
 # Evaluate the frequency response of the impedance for the ECM
 # define parameter values
 param_value = np.array([100.0,100.0,2e-4 ,0.8,100.0,2e-4 ,0.8])
-ECM_Z = ECM_utils.CircuitEvaluate(freqs, ECM_Params, param_value, verbose=True)
+scaling = np.array([1,1,1,1,1,1,1])
+ECM_Z = ECM_utils.CircuitEvaluate(freqs, ECM_Params, param_value, scaling, verbose=True)
 
 #_______________________________________________________________________________________________________________________
 # fitting data
