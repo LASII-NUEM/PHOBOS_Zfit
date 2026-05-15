@@ -2,8 +2,6 @@ from utils import data_types, ECM_utils
 import numpy as np
 from scipy.optimize import curve_fit, minimize, least_squares
 import time
-from functools import partial
-
 
 class Circuit_fitting:
     def __init__(self, data_medium:data_types.SpectroscopyData, freqs:np.ndarray, ecm: ECM_utils.CircuitParams):
@@ -26,7 +24,7 @@ class Circuit_fitting:
         #validate freqs
         if not isinstance(freqs, np.ndarray):
             raise TypeError(f'[EquivalentCircuit] "freqs" must be a Numpy Array! Curr. type = {type(freqs)}')
-        self.freqs = freqs
+        self.freqs = freqs.astype(float)
 
        #validate ECM data
         expected_ECMtypes = [ECM_utils.CircuitParams, list]
@@ -34,16 +32,7 @@ class Circuit_fitting:
             raise TypeError(f'[EquivalentCircuit] "ECM" must be {expected_ECMtypes}! Curr. type = {type(data_medium)}')
         self.ecm = ecm
 
-
-    def fit_circuit(self, initial_guess:np.ndarray, scaling_array:np.ndarray, method='BFGS', tol=1e-6, verbose=False):
-        '''
-        :param initial_guess: the initial guess for the fit to run the iterative algorithms
-        :param scaling_array: scale all the search parameters to avoid exploding gradients
-        :param method: which optimization algorithm will be used to fit the circuit data
-        :param tol: tolerance for the algorithms
-        :param verbose: flag to print the statistics in the terminal
-        :return: the parameters the best fit the expected equivalent circuit
-        '''
+        self.scaling = None
         self.fit_method_reponse = []
         self.opt_params = []
         self.opt_scaled_params = []
@@ -55,6 +44,16 @@ class Circuit_fitting:
         self.error_MAE = []
         self.inter_num = []
         self.fit_elapsed_time = []
+
+    def fit_circuit(self, initial_guess:np.ndarray, scaling_array:np.ndarray, method='BFGS', tol=1e-6, verbose=False):
+        '''
+        :param initial_guess: the initial guess for the fit to run the iterative algorithms
+        :param scaling_array: scale all the search parameters to avoid exploding gradients
+        :param method: which optimization algorithm will be used to fit the circuit data
+        :param tol: tolerance for the algorithms
+        :param verbose: flag to print the statistics in the terminal
+        :return: the parameters the best fit the expected equivalent circuit
+        '''
 
         #validate "method"
         valid_methods = ['BFGS', 'NLLS']
@@ -70,32 +69,33 @@ class Circuit_fitting:
             raise TypeError(f'[EquivalentCircuit] "initial_guess" must be a Numpy Array! Curr. type = {type(initial_guess)}')
 
         #validate "scaling_array"
-        if len(scaling_array) != len(initial_guess):
+        Z_meas_arr = np.atleast_2d(self.z_meas)
+        if len(scaling_array[0,:]) != len(initial_guess):
             raise ValueError(f'[EquivalentCircuit] Length of the scaling array do not match the length of the initial guess! {len(scaling_array)} != {len(initial_guess)}')
+        if scaling_array.shape[0] != Z_meas_arr.shape[0]:
+            raise ValueError(f'[EquivalentCircuit] The amount of scaling arrays do not match the amount of spectra! {scaling_array.shape[0]} != {Z_meas_arr.shape[0]}')
         self.scaling = scaling_array
 
         if not isinstance(scaling_array, np.ndarray):
             raise TypeError(f'[EquivalentCircuit] "scaling_array" must be a Numpy Array! Curr. type = {type(scaling_array)}')
 
         bounds = self.ecm.bound #optimization boundaries
-        Z_meas_arr = np.atleast_2d(self.z_meas)
-
         if self.fit_method == "BFGS":
             for i in range(Z_meas_arr.shape[0]):
                 z_raw = Z_meas_arr[i, :]
                 t_init = time.time()
-                min_obj = minimize(self.CUMSE, initial_guess, args=([z_raw, self.freqs, scaling_array]), bounds=bounds, method='L-BFGS-B')
+                min_obj = minimize(self.CUMSE, initial_guess, args=([z_raw.astype('complex'), self.freqs, scaling_array[i,:]]), bounds=bounds, method='L-BFGS-B')
                 t_elapsed = time.time() - t_init
-                opt_fit = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, min_obj.x, self.scaling, verbose=False)
+                opt_fit = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, min_obj.x, scaling_array[i,:], verbose=False)
                 Z_fit = opt_fit.Z_ECM
-                opt_params_scaled = min_obj.x*scaling_array #rescale the minimized parameters
+                opt_params_scaled = min_obj.x*scaling_array[i,:] #rescale the minimized parameters
                 nmse = self.NMSE(z_raw.astype("complex"), Z_fit.astype('complex')) #NMSE score for both complex parts
                 nrmse = self.NRMSE(z_raw.astype("complex"), Z_fit.astype('complex')) #nrmse score for both complex parts
                 chisqr = self.chi_square(z_raw.astype("complex"), Z_fit.astype('complex')) #chi-square score for both complex parts
                 mae = self.MAE(z_raw.astype("complex"), Z_fit.astype('complex')) #mae score for both complex parts
 
                 if verbose:
-                    print(f'[EquivalentCircuit] Gradient-based impedance fitting:')
+                    print(f'[EquivalentCircuit] Quasi-Newton-based impedance fitting:')
                     print(f'Test name: {self.data_medium.sheet_names[i]}')
                     print(f't = {t_elapsed} s')
                     print(f'NMSE = {nmse}')
@@ -132,12 +132,12 @@ class Circuit_fitting:
             for i in range(Z_meas_arr.shape[0]):
                 z_raw = Z_meas_arr[i, :]
                 t_init = time.time()
-                ls_obj = least_squares(self.CUMSE, x0=initial_guess, args=([[self.z_meas, self.freqs, scaling_array]]),
-                                       bounds=bounds, max_nfev=5000)  # Trust-Region-based NLLS
+                ls_obj = least_squares(self.CUMSE, x0=initial_guess, args=([[z_raw.astype('complex'), self.freqs, scaling_array[i,:]]]),
+                                       bounds=bounds, max_nfev=5000) #Trust-Region-based NLLS
                 t_elapsed = time.time() - t_init
-                opt_fit = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, ls_obj.x, self.scaling, verbose=False)
+                opt_fit = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, ls_obj.x, scaling_array[i,:], verbose=False)
                 Z_fit = opt_fit.Z_ECM
-                opt_params_scaled = ls_obj.x*scaling_array #rescale the minimized parameters
+                opt_params_scaled = ls_obj.x*scaling_array[i,:] #rescale the minimized parameters
                 nmse = self.NMSE(z_raw.astype("complex"), Z_fit.astype("complex")) #NMSE score for both complex parts
                 nrmse = self.NRMSE(z_raw.astype("complex"), Z_fit.astype("complex")) #nrmse score for both complex parts
                 chisqr = self.chi_square(z_raw.astype("complex"), Z_fit.astype("complex")) #chi-square score for both complex parts
@@ -181,7 +181,7 @@ class Circuit_fitting:
         :return: the mean squared error between the measured and fitted impedance values
         '''
 
-        ecm_hat = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, theta, self.scaling, verbose=False)
+        ecm_hat = ECM_utils.CircuitEvaluate(args[1], self.ecm, theta, args[2], verbose=False)
         z_hat = ecm_hat.Z_ECM
         z_hat = z_hat.astype('complex')
         args[0] = args[0].astype('complex')

@@ -165,7 +165,7 @@ class CircuitParams:
             if "alpha" in param.lower():
                 bds = (0, 1)
             else:
-                bds = (0, 10)
+                bds = (0, np.inf)
             self.bound.append(bds)
 
 class CircuitEvaluate:
@@ -182,19 +182,12 @@ class CircuitEvaluate:
         self.verbose = verbose
         self.scaling = scaling
         self.params_value = params_value
-
-        self.params_scaled = np.asarray(self.params_value)
-
-        for i in range(len(self.params_value)):
-            self.params_scaled[i] = self.params_value[i]*self.scaling[i]
-
+        self.params_scaled = self.params_value.flatten()*self.scaling.flatten()
         self.param_names = self.ecm.param_names
         self.params =dict(zip(self.param_names, self.params_scaled))
-
         self.Freqs = np.asarray(freqs, dtype=float)
         self.W = 2 * np.pi * self.Freqs
         self.tree = self.ecm.tree
-
         self.Z_ECM = self.eval_node(self.tree)
 
         if self.verbose:
@@ -273,7 +266,7 @@ class CircuitEvaluate:
         return z1 + z2
 
     def z_parallel(self, z1, z2):
-        return 1 / (1 / z1 + 1 / z2)
+        return 1 / ((1/z1) + (1/z2))
 
     def z_R(self, R, w):
         return R * np.ones_like(w, dtype=complex)

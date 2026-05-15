@@ -24,10 +24,10 @@ class LinearKramersKronig:
         self.fit_type = 'complex'
         self.freqs = data_medium.freq
         self.z_meas_real = data_medium.Z_real
-        self.z_meas_imag = -data_medium.Z_imag
+        self.z_meas_imag = data_medium.Z_imag
 
         f_Hz = np.asarray(self.freqs, float).ravel()
-        z_meas = data_medium.Z_real + 1j * data_medium.Z_imag  # complex impedance
+        z_meas = data_medium.Z_real - 1j * data_medium.Z_imag  # complex impedance
         Z_meas_arr = np.atleast_2d(z_meas)
 
         for i in range(Z_meas_arr.shape[0]):

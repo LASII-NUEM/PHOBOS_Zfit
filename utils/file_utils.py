@@ -4,9 +4,10 @@ import csv
 import numpy as np
 import os
 
-def read(filename:str):
+def read(filename:str, flip=False):
     '''
     :param filename: path where the .csv is stored
+    :param flip: flag to flip the matrices and arrays
     '''
 
     #check if the filename exists
@@ -61,7 +62,7 @@ def read(filename:str):
         raise TypeError(f'[filew_utils] Unknown file type! Curr. type = {type(file_type)}')
 
 
-    data = data_types.SpectroscopyData(raw_data_all, n_freqs, ext, sheets)
+    data = data_types.SpectroscopyData(raw_data_all, n_freqs, ext, sheets, flip=flip)
 
     return data
 
