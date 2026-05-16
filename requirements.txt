@@ -1,7 +1,7 @@
+sympy
 impedance
 matplotlib
 numpy
 pandas
 scipy
-schemdraw
 openpyxl

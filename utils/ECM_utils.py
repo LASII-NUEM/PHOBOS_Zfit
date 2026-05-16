@@ -1,14 +1,16 @@
 import numpy as np
 import re
 import matplotlib.pyplot as plt
-from collections import OrderedDict
+import sympy as sp
+from impedance.models.circuits.elements import element
+
 
 class CircuitParams:
     """
     Generic circuit parser for impedance frequency response.
     """
 
-    def __init__(self, circuit):
+    def __init__(self, circuit, Zequation = False):
 
         '''
         :param circuit: a string representing a circuit expression
@@ -37,6 +39,25 @@ class CircuitParams:
             raise ValueError("Invalid circuit: extra tokens found")
 
         self.bounds()
+
+        if Zequation:
+            self.sympyImp()
+
+            print("\nImpedance equation:")
+            sp.pprint(self.Zequation)
+
+            fig, ax = plt.subplots()
+            ax.text(0.5, 0.5,
+                    "Impedance response equation $Z(\\omega)$:\n\n"
+                    + f"$ {sp.latex(self.Zequation)} $",
+                    fontsize=20,
+                    ha='center',
+                    va='center',
+                    transform=ax.transAxes
+                    )
+            ax.axis('off')
+            plt.tight_layout()
+            plt.show()
 
     def circuit_tree(self):
         values = []  # elements and partial trees
@@ -168,8 +189,59 @@ class CircuitParams:
                 bds = (0, np.inf)
             self.bound.append(bds)
 
+    def sympyImp(self, element=None):
+
+        root_call = element is None
+
+        if root_call:
+            element = self.tree
+
+        w = sp.Symbol(r'\omega')
+        j = sp.Symbol('j')
+        kind = element[0]
+
+        if kind == 'series':
+            Z = sum(self.sympyImp(e) for e in element[1:])
+
+        elif kind == 'parallel':
+            z_list = [self.sympyImp(e) for e in element[1:]]
+
+            if any(z is None for z in z_list):
+                raise ValueError(f"One element inside parallel returned None: {element}")
+
+            Z = 1 / sum(1 / z for z in z_list)
+
+        elif kind == 'R':
+            Z = sp.Symbol(str(element[1]))
+
+        elif kind == 'C':
+            C = sp.Symbol(str(element[1]))
+            Z = 1 / (j * w * C)
+
+        elif kind == 'CPE':
+            Q = sp.Symbol(str(element[1]))
+            alpha = sp.Symbol(str(element[2]))
+            Z = 1 / (Q * (j * w) ** alpha)
+
+        elif kind == 'W':
+            W = sp.Symbol(str(element[1]))
+            Z = W / sp.sqrt(j * w)
+
+        else:
+            raise ValueError(f"Unknown element type: {kind} in {element}")
+
+        if root_call:
+            self.Zequation = sp.Eq(
+                sp.Symbol('Z_total'),
+                sp.simplify(Z)
+            )
+            return self.Zequation
+
+        return Z
+
+
 class CircuitEvaluate:
-    def __init__(self, freqs: np.ndarray, ecm , params_value: np.ndarray,scaling:  np.ndarray, verbose:bool=False):
+    def __init__(self, freqs: np.ndarray, ecm, params_value: np.ndarray, scaling: np.ndarray, verbose: bool = False):
         '''
 
         :param freqs: list of frequencies
@@ -182,48 +254,48 @@ class CircuitEvaluate:
         self.verbose = verbose
         self.scaling = scaling
         self.params_value = params_value
-        self.params_scaled = self.params_value.flatten()*self.scaling.flatten()
+        self.params_scaled = self.params_value.flatten() * self.scaling.flatten()
         self.param_names = self.ecm.param_names
-        self.params =dict(zip(self.param_names, self.params_scaled))
+        self.params = dict(zip(self.param_names, self.params_scaled))
         self.Freqs = np.asarray(freqs, dtype=float)
         self.W = 2 * np.pi * self.Freqs
         self.tree = self.ecm.tree
         self.Z_ECM = self.eval_node(self.tree)
 
         if self.verbose:
-             Z_ECM_real = np.real(self.Z_ECM)
-             Z_ECM_imag = np.imag(self.Z_ECM)
-             Z_ECM_mag = np.abs(self.Z_ECM)
-             Z_ECM_phase = np.angle(self.Z_ECM, deg=True)
+            Z_ECM_real = np.real(self.Z_ECM)
+            Z_ECM_imag = np.imag(self.Z_ECM)
+            Z_ECM_mag = np.abs(self.Z_ECM)
+            Z_ECM_phase = np.angle(self.Z_ECM, deg=True)
 
-             fig, ax = plt.subplots(2, 1, figsize=(8, 5))
-             fig.suptitle(f"ECM - Frequency Evaluation \n{self.circuit}")
-             ax1, ax2 = ax
-             # --- Bode magnitude ---
-             ax1.semilogx(freqs, Z_ECM_mag)
-             ax1.set_xlabel("Frequency (Hz)")
-             ax1.set_ylabel("|Z| (Ohm)")
-             ax1.set_title("Bode Magnitude")
-             ax1.grid(True, which="both")
-             # --- Bode phase ---
-             ax2.semilogx(freqs, Z_ECM_phase)
-             ax2.set_xlabel("Frequency (Hz)")
-             ax2.set_ylabel("Phase (deg)")
-             ax2.set_title("Bode Phase")
-             ax2.grid(True, which="both")
-             plt.tight_layout()
-             plt.show()
+            fig, ax = plt.subplots(2, 1, figsize=(8, 5))
+            fig.suptitle(f"ECM - Frequency Evaluation \n{self.circuit}")
+            ax1, ax2 = ax
+            # --- Bode magnitude ---
+            ax1.semilogx(freqs, Z_ECM_mag)
+            ax1.set_xlabel("Frequency (Hz)")
+            ax1.set_ylabel("|Z| (Ohm)")
+            ax1.set_title("Bode Magnitude")
+            ax1.grid(True, which="both")
+            # --- Bode phase ---
+            ax2.semilogx(freqs, Z_ECM_phase)
+            ax2.set_xlabel("Frequency (Hz)")
+            ax2.set_ylabel("Phase (deg)")
+            ax2.set_title("Bode Phase")
+            ax2.grid(True, which="both")
+            plt.tight_layout()
+            plt.show()
 
-             # Nyquist
-             plt.figure(figsize=(6, 6))
-             plt.suptitle(f"ECM - Frequency Evaluation \n{self.circuit}")
-             plt.plot(Z_ECM_real, -Z_ECM_imag)
-             plt.xlabel("Z' (Ohm)")
-             plt.ylabel("-Z'' (Ohm)")
-             plt.title("Nyquist Plot")
-             plt.grid(True)
-             plt.tight_layout()
-             plt.show()
+            # Nyquist
+            plt.figure(figsize=(6, 6))
+            plt.suptitle(f"ECM - Frequency Evaluation \n{self.circuit}")
+            plt.plot(Z_ECM_real, -Z_ECM_imag)
+            plt.xlabel("Z' (Ohm)")
+            plt.ylabel("-Z'' (Ohm)")
+            plt.title("Nyquist Plot")
+            plt.grid(True)
+            plt.tight_layout()
+            plt.show()
 
     def eval_node(self, node):
         """
@@ -261,12 +333,11 @@ class CircuitEvaluate:
         else:
             raise ValueError(f"Unknown node type: {kind}")
 
-
     def z_series(self, z1, z2):
         return z1 + z2
 
     def z_parallel(self, z1, z2):
-        return 1 / ((1/z1) + (1/z2))
+        return 1 / ((1 / z1) + (1 / z2))
 
     def z_R(self, R, w):
         return R * np.ones_like(w, dtype=complex)

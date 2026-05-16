@@ -4,7 +4,7 @@ import csv
 import numpy as np
 import os
 
-def read(filename:str, flip=False):
+def read(filename:str, flip=True):
     '''
     :param filename: path where the .csv is stored
     :param flip: flag to flip the matrices and arrays

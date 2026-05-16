@@ -1,7 +1,7 @@
 import numpy as np
 
 class SpectroscopyData:
-    def __init__(self, eis_data:np.ndarray, n_freqs:int=5, file_type:str='.csv', sheet_names:list=None, flip=False):
+    def __init__(self, eis_data:np.ndarray, n_freqs:int=5, file_type:str='.csv', sheet_names:list=None, flip=True):
         '''
         :param eis_data : raw data output from the PHOBOS acquisition system
         :param n_freqs : number of frequencies

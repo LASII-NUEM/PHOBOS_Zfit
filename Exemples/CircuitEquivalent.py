@@ -7,7 +7,7 @@ import numpy as np
 circuit= "(C//R)"
 
 # define circuit params
-ECM_Params = ECM_utils.CircuitParams(circuit)
+ECM_Params = ECM_utils.CircuitParams(circuit, Zequation = True)
 
 print("Circuit:")
 print(ECM_Params.circuit)
