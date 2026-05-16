@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #user input variables
-filename = './data/Dados Everton.xlsx' #name of the file with the acquired data
+filename = '../data/Dados Everton.xlsx'  #name of the file with the acquired data
 circuit= "(R1 +(R2//CPE1)+(R3//CPE2))" #string with the circuit description code
 initial_guess = np.array([1,1,1,0.5,1,1,0.5]) #initial guess for the fitting routine
 scaling_array = np.array([[1e3, 1e2, 1e-4, 1, 1e3, 1e-4, 1],
