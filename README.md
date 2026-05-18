@@ -4,8 +4,6 @@
 
 This repository contains a modular framework for **Electrical Impedance Spectroscopy (EIS)** data processing, visualization, validation, and equivalent circuit model (ECM) fitting.
 
-The project was developed as the final project for the **Signals & Systems** discipline of the **CPGEI-UTFPR program**.
-
 The framework provides utilities for:
 
 - Loading and organizing EIS datasets
