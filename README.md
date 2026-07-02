@@ -1,4 +1,4 @@
-# EIS Fitting Framework
+# PHOBOS ZFit - EIS Fitting Framework
 
 **Equivalent Circuit Model fitting for EIS data — Powered by LASII**
 
@@ -28,7 +28,7 @@ The framework provides utilities for:
 # 1. Repository Structure
 
 ```text
-EIS_fit_PPGQ/
+PHOBOS_Zfit/
 │
 ├── Examples/
 │   ├── CircuitEquivalent.py
