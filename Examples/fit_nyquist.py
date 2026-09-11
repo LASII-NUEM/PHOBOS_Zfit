@@ -3,7 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #user input variables
-filename = '../data/Dados Everton.xlsx'  #name of the file with the acquired data
+filename = '../data/Dados Everton.xlsx'  #  name of the file with the acquired data
+Type = "EIS"                             # or Type = "PHOBOS"
 circuit= "(R1 +(R2//CPE1)+(R3//CPE2))" #string with the circuit description code
 initial_guess = np.array([1,1,1,0.5,1,1,0.5]) #initial guess for the fitting routine
 scaling_array = np.array([[1e3, 1e2, 1e-4, 1, 1e3, 1e-4, 1],
@@ -14,7 +15,7 @@ method = 'BFGS' #which estimator will be used to compute the fit
 plot_style = 'tiles' #how to display the fitted data (i.e., 'tile' divides into subplots)
 
 #read the .xlsx data and store in a dedicated data structure
-spec_obj = file_utils.read(filename, flip=True)
+spec_obj = file_utils.read(filename, type = Type)
 Z_real = np.asarray(spec_obj.Z_real, dtype=float)
 Z_imag = np.asarray(spec_obj.Z_imag, dtype=float)
 Z_complex = (Z_real-1j*Z_imag).astype("complex")

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 #_______________________________________________________________________________________________________________________
 # READ DATA .XLSX
-spec_obj = file_utils.read('./data/Dados Everton.xlsx')
+spec_obj = file_utils.read('./data/Dados Everton.xlsx', type = "EIS")
 freqs = spec_obj.freq
 z_real = spec_obj.Z_real
 z_imag = spec_obj.Z_imag #imaginary impedance is negative

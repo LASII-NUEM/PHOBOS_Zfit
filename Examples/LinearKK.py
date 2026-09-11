@@ -1,7 +1,7 @@
 from utils import file_utils, linKK
 #_______________________________________________________________________________________________________________________
 # Read Data .CSV file
-spec_obj = file_utils.read('../data/17 - EIS ferro(III) 5,0e-6 - DC 0,6 V.csv')
+spec_obj = file_utils.read('../data/17 - EIS ferro(III) 5,0e-6 - DC 0,6 V.csv', type="EIS")
 
 #_______________________________________________________________________________________________________________________
 # Validate EIS data - by Linear Krammers Kroning

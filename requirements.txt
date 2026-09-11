@@ -1,3 +1,10 @@
+# ==========================================
+#               Requirements file
+# ==========================================
+# to install all dependencies, please run:
+# python -m pip install -r requirements.txt
+# ==========================================
+
 sympy
 impedance
 matplotlib
