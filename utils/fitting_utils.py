@@ -1,6 +1,6 @@
-from utils import data_types, ECM_utils
+from utils import data_types, ECM_utils, optimization_utils
 import numpy as np
-from scipy.optimize import curve_fit, minimize, least_squares
+from scipy.optimize import minimize, least_squares
 import time
 
 class Circuit_fitting:
@@ -56,7 +56,7 @@ class Circuit_fitting:
         '''
 
         #validate "method"
-        valid_methods = ['BFGS', 'NLLS']
+        valid_methods = ['BFGS', 'NLLS', 'Nelder-Mead', 'PSO', 'BFGS-classic']
         if method not in valid_methods:
             raise ValueError(f'[EquivalentCircuit] {method} not implemented! Try: {valid_methods}')
         self.fit_method = method
@@ -95,7 +95,7 @@ class Circuit_fitting:
                 mae = self.MAE(z_raw.astype("complex"), Z_fit.astype('complex')) #mae score for both complex parts
 
                 if verbose:
-                    print(f'[EquivalentCircuit] Quasi-Newton-based impedance fitting:')
+                    print(f'[EquivalentCircuit] L-BFGS-based impedance fitting:')
                     print(f'Test name: {self.data_medium.sheet_names[i]}')
                     print(f't = {t_elapsed} s')
                     print(f'NMSE = {nmse}')
@@ -120,11 +120,57 @@ class Circuit_fitting:
                 self.inter_num.append(min_obj.nit)
                 self.fit_elapsed_time.append(t_elapsed)
 
-            return OptimizerResults(fit_result = self.fit_method_reponse, opt_params= self.opt_params, opt_params_scaled=self.opt_scaled_params,
+            return optimization_utils.OptimizerResults(fit_result = self.fit_method_reponse, opt_params= self.opt_params, opt_params_scaled=self.opt_scaled_params,
                                     opt_cost= self.opt_cost,
                                     opt_fit=self.opt_fitting, nmse_score=self.error_NMSE, nrmse_score=self.error_NRMSE, chi_square=self.error_CHISQR,
                                     mae_score=self.error_MAE,
                                     n_iter= self.inter_num, t_elapsed=self.fit_elapsed_time)  # return the optimized parameters
+
+        if self.fit_method == "BFGS-classic":
+            for i in range(Z_meas_arr.shape[0]):
+                z_raw = Z_meas_arr[i, :]
+                t_init = time.time()
+                min_obj = optimization_utils.BFGS(self.CUMSE, initial_guess, args=([z_raw.astype('complex'), self.freqs, scaling_array[i,:]]), bounds=bounds)
+                t_elapsed = time.time() - t_init
+                opt_fit = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, min_obj['theta'], scaling_array[i,:], verbose=False)
+                Z_fit = opt_fit.Z_ECM
+                opt_params_scaled = min_obj['theta']*scaling_array[i,:] #rescale the minimized parameters
+                nmse = self.NMSE(z_raw.astype("complex"), Z_fit.astype('complex')) #NMSE score for both complex parts
+                nrmse = self.NRMSE(z_raw.astype("complex"), Z_fit.astype('complex')) #nrmse score for both complex parts
+                chisqr = self.chi_square(z_raw.astype("complex"), Z_fit.astype('complex')) #chi-square score for both complex parts
+                mae = self.MAE(z_raw.astype("complex"), Z_fit.astype('complex')) #mae score for both complex parts
+
+                if verbose:
+                    print(f'[EquivalentCircuit] BFGS-based impedance fitting:')
+                    print(f'Test name: {self.data_medium.sheet_names[i]}')
+                    print(f't = {t_elapsed} s')
+                    print(f'NMSE = {nmse}')
+                    print(f'NRMSE = {nrmse}')
+                    print(f'chi-square = {chisqr}')
+                    print(f'MAE = {mae}')
+                    fit_params = self.ecm.param_names
+                    print(f'fitted params = ')
+                    for i in range(len(fit_params)):
+                        print(f'{fit_params[i]} = {opt_params_scaled[i]}')
+                    print()
+
+                self.fit_method_reponse.append(min_obj)
+                self.opt_params.append(opt_fit.params_value)
+                self.opt_scaled_params.append(opt_params_scaled)
+                self.opt_cost.append(min_obj['fun'])
+                self.opt_fitting.append(opt_fit)
+                self.error_NMSE.append(nmse)
+                self.error_NRMSE.append(nrmse)
+                self.error_CHISQR.append(chisqr)
+                self.error_MAE.append(mae)
+                self.inter_num.append(min_obj['nit'])
+                self.fit_elapsed_time.append(t_elapsed)
+
+            return optimization_utils.OptimizerResults(fit_result = self.fit_method_reponse, opt_params= self.opt_params, opt_params_scaled=self.opt_scaled_params,
+                                    opt_cost= self.opt_cost,
+                                    opt_fit=self.opt_fitting, nmse_score=self.error_NMSE, nrmse_score=self.error_NRMSE, chi_square=self.error_CHISQR,
+                                    mae_score=self.error_MAE,
+                                    n_iter= self.inter_num, t_elapsed=self.fit_elapsed_time) #return the optimized parameters
 
         elif self.fit_method == "NLLS":
             bounds = np.array(bounds)  # convert the boundaries to numpy array
@@ -167,10 +213,60 @@ class Circuit_fitting:
                 self.error_MAE.append(mae)
                 self.fit_elapsed_time.append(t_elapsed)
 
-            return OptimizerResults(fit_result= self.fit_method_reponse, opt_params= self.opt_params, opt_params_scaled= self.opt_scaled_params,
+            return optimization_utils.OptimizerResults(fit_result= self.fit_method_reponse, opt_params= self.opt_params, opt_params_scaled= self.opt_scaled_params,
                                         opt_fit= self.opt_fitting, nmse_score=self.error_NMSE, nrmse_score=self.error_NRMSE,
                                     chi_square=self.error_CHISQR, mae_score= self.error_MAE, t_elapsed= self.fit_elapsed_time)
 
+        elif self.fit_method == "Nelder-Mead":
+            for i in range(Z_meas_arr.shape[0]):
+                z_raw = Z_meas_arr[i, :]
+                t_init = time.time()
+                min_obj = optimization_utils.NelderMeadSimplex(self.CUMSE, initial_guess,
+                                   args=([z_raw.astype('complex'), self.freqs, scaling_array[i, :]]),
+                                   tol=tol, bounds=bounds)
+                t_elapsed = time.time() - t_init
+                opt_fit = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, min_obj, scaling_array[i, :],
+                                                    verbose=False)
+                Z_fit = opt_fit.Z_ECM
+                opt_params_scaled = min_obj * scaling_array[i, :] #rescale the minimized parameters
+                nmse = self.NMSE(z_raw.astype("complex"), Z_fit.astype('complex')) #NMSE score for both complex parts
+                nrmse = self.NRMSE(z_raw.astype("complex"), Z_fit.astype('complex')) #nrmse score for both complex parts
+                chisqr = self.chi_square(z_raw.astype("complex"), Z_fit.astype('complex')) #chi-square score for both complex parts
+                mae = self.MAE(z_raw.astype("complex"), Z_fit.astype('complex')) #mae score for both complex parts
+
+                if verbose:
+                    print(f'[EquivalentCircuit] Quasi-Newton-based impedance fitting:')
+                    print(f'Test name: {self.data_medium.sheet_names[i]}')
+                    print(f't = {t_elapsed} s')
+                    print(f'NMSE = {nmse}')
+                    print(f'NRMSE = {nrmse}')
+                    print(f'chi-square = {chisqr}')
+                    print(f'MAE = {mae}')
+                    fit_params = self.ecm.param_names
+                    print(f'fitted params = ')
+                    for i in range(len(fit_params)):
+                        print(f'{fit_params[i]} = {opt_params_scaled[i]}')
+                    print()
+
+                self.fit_method_reponse.append(min_obj)
+                self.opt_params.append(opt_fit.params_value)
+                self.opt_scaled_params.append(opt_params_scaled)
+                self.opt_cost.append(ECM_utils.CircuitEvaluate(self.freqs, self.ecm, min_obj, scaling_array[i,:], verbose=False))
+                self.opt_fitting.append(opt_fit)
+                self.error_NMSE.append(nmse)
+                self.error_NRMSE.append(nrmse)
+                self.error_CHISQR.append(chisqr)
+                self.error_MAE.append(mae)
+                self.fit_elapsed_time.append(t_elapsed)
+
+            return optimization_utils.OptimizerResults(fit_result=self.fit_method_reponse,
+                                                       opt_params=self.opt_params,
+                                                       opt_params_scaled=self.opt_scaled_params,
+                                                       opt_cost=self.opt_cost,
+                                                       opt_fit=self.opt_fitting, nmse_score=self.error_NMSE,
+                                                       nrmse_score=self.error_NRMSE, chi_square=self.error_CHISQR,
+                                                       mae_score=self.error_MAE,
+                                                       t_elapsed=self.fit_elapsed_time)  # return the optimized parameters
         else:
             raise ValueError(f'[EquivalentCircuit] method = {method} not implemented! Try: {valid_methods}')
 
@@ -191,7 +287,7 @@ class Circuit_fitting:
         else:
             SSE = np.sum(((args[0].real-z_hat.real)**2) + ((args[0].imag-z_hat.imag)**2))
 
-        return SSE / len(z_hat)
+        return SSE
 
     def NRMSE(self, z: np.ndarray, z_hat: np.ndarray):
         '''
@@ -297,27 +393,3 @@ class Circuit_fitting:
 
         return 100*np.mean(abs_err)
 
-class OptimizerResults:
-    def __init__(self, fit_result=None, opt_params=None, opt_params_scaled=None, opt_cost=None, opt_fit=None, nmse_score=None, nrmse_score=None, chi_square=None, mae_score=None, n_iter=None, t_elapsed=None):
-        if fit_result is not None:
-            self.fit_reponse = fit_result
-        if opt_params is not None:
-            self.opt_params = opt_params
-        if opt_params_scaled is not None:
-            self.opt_params_scaled = opt_params_scaled
-        if opt_cost is not None:
-            self.opt_cost = opt_cost
-        if opt_fit is not None:
-            self.opt_fit = opt_fit
-        if nmse_score is not None:
-            self.nmse_score = nmse_score
-        if nrmse_score is not None:
-            self.nrmse_score = nrmse_score
-        if chi_square is not None:
-            self.chi_square = chi_square
-        if mae_score is not None:
-            self.mae_score = mae_score
-        if n_iter is not None:
-            self.n_iter = n_iter
-        if t_elapsed is not None:
-            self.t_elapsed = t_elapsed

@@ -3,7 +3,7 @@ import numpy as np
 
 class SpectroscopyData:
     def __init__(self, eis_data: np.ndarray, freq: np.ndarray, n_freqs: int = 5, file_ext: str = '.csv',
-                 Type: str = 'eis', sheet_names: list = None, ):
+                 Type: str = 'eis', sheet_names: list = None):
         '''
         :param eis_data : raw data output from the PHOBOS acquisition system
         :param n_freqs : number of frequencies
@@ -34,10 +34,10 @@ class SpectroscopyData:
         if Type not in file_type:
             raise TypeError(f'[file_utils] Unknown file type! Curr. type = {Type}')
 
-        self.Freq = freq
+        self.freq = freq
         self.n_freqs = n_freqs
 
-        if self.Freq.size != self.n_freqs:
+        if self.freq.size != self.n_freqs:
             raise TypeError(
                 f'[SpectroscopyData] Number of frequencies must be equal to {n_freqs}. Check your EIS file!')
 
@@ -50,9 +50,9 @@ class SpectroscopyData:
                 self.Z_imag = -eis_data[:, 6]
 
             elif file_ext in [".xls", ".xlsx"]:
-
-                self.Z_real = np.flip(eis_data[:, :, 2], axis=1)
-                self.Z_imag = np.flip(eis_data[:, :, 3], axis=1)
+                self.freq = np.flip(self.freq)
+                self.Z_real = np.flip(eis_data[:,:,2], axis=1)
+                self.Z_imag = np.flip(eis_data[:,:,3], axis=1)
                 self.sheets = eis_data.shape[0]
 
         elif Type == "phobos":
@@ -60,9 +60,9 @@ class SpectroscopyData:
             # organize the data based on the CSV format
             valid_electrodes = eis_data[:, 2:]  # filter the array from the first electrode reading
             # process capacitance and resistance separately
-            idx_cp = np.arange(0, int(2 * len(self.Freq)), 2)  # indexes of each capacitance reading
+            idx_cp = np.arange(0, int(2 * len(self.freq)), 2)  # indexes of each capacitance reading
             self.Cp = valid_electrodes[:, idx_cp]  # update capacitance readings
-            idx_rp = np.arange(1, int(2 * len(self.Freq)), 2)  # indexes of each resistance reading
+            idx_rp = np.arange(1, int(2 * len(self.freq)), 2)  # indexes of each resistance reading
             self.Rp = valid_electrodes[:, idx_rp]  # update resistance readings
 
             if np.all(np.char.strip(eis_data[:, 1].astype(str)) == ""):
@@ -94,8 +94,8 @@ class SpectroscopyData:
                 eis_data = eis_data[:n_valid_rows, :]
 
                 self.n_samples = len(eis_data[:, 0]) // self.n_modes
-                self.Cp = np.reshape(self.Cp[:n_valid_rows,:], [self.n_samples, self.n_modes, len(self.Freq)]).transpose(0, 2, 1)
-                self.Rp = np.reshape(self.Rp[:n_valid_rows,:], [self.n_samples, self.n_modes, len(self.Freq)]).transpose(0, 2, 1)
+                self.Cp = np.reshape(self.Cp[:n_valid_rows,:], [self.n_samples, self.n_modes, len(self.freq)]).transpose(0, 2, 1)
+                self.Rp = np.reshape(self.Rp[:n_valid_rows,:], [self.n_samples, self.n_modes, len(self.freq)]).transpose(0, 2, 1)
                 self.Cp_avg = np.mean(self.Cp, axis=0)
                 self.Rp_avg = np.mean(self.Rp, axis=0)
 
@@ -106,7 +106,7 @@ class SpectroscopyData:
 
     def nyquist(self):
 
-        self.omegas = 2 * np.pi * self.Freq
+        self.omegas = 2 * np.pi * self.freq
 
         if self.cell == "Commercial-cell":
 

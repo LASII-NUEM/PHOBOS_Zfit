@@ -257,8 +257,8 @@ class CircuitEvaluate:
         self.params_scaled = self.params_value.flatten() * self.scaling.flatten()
         self.param_names = self.ecm.param_names
         self.params = dict(zip(self.param_names, self.params_scaled))
-        self.Freqs = np.asarray(freqs, dtype=float)
-        self.W = 2 * np.pi * self.Freqs
+        self.freqs = np.asarray(freqs, dtype=float)
+        self.W = 2*np.pi*self.freqs
         self.tree = self.ecm.tree
         self.Z_ECM = self.eval_node(self.tree)
 

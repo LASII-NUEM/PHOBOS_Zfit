@@ -85,20 +85,20 @@ scaling_array = np.array([[1e3, 1e2, 1e-4, 1, 1e3, 1e-4, 1],
                          [1e3, 1e3, 1e-6, 1, 1e3, 1e-5, 1]])
 
 ECM_BFGS_params = ECM_fit.fit_circuit(initial_params, scaling_array, method="BFGS", verbose=False)
-ECM_NLLS_params = ECM_fit.fit_circuit(initial_params, scaling_array, method="NLLS", verbose=False)
+ECM_NM_params = ECM_fit.fit_circuit(initial_params, scaling_array, method="Nelder-Mead", verbose=False)
 
 #________________________
 # Plot fitting result
 
 Z_bfgs = ECM_BFGS_params.opt_fit
-Z_nlls = ECM_NLLS_params.opt_fit
+Z_nlls = ECM_NM_params.opt_fit
 
 for i in range(len(Z_real[:,0])):
     fig, ax = plt.subplots(figsize=(12,10))
     plt.title(f'[Nyquist] BFGS/NLLS Fit: {spec_obj.sheet_names[i]}')
 
     ax.plot(Z_bfgs[i].Z_ECM.real, -Z_bfgs[i].Z_ECM.imag, color="blue", label=f'BFGS: χ2 = {ECM_BFGS_params.chi_square[i]}')
-    ax.plot(Z_nlls[i].Z_ECM.real, -Z_nlls[i].Z_ECM.imag, color="red",  label=f'NLLS: χ2 = {ECM_NLLS_params.chi_square[i]}')
+    ax.plot(Z_nlls[i].Z_ECM.real, -Z_nlls[i].Z_ECM.imag, color="red",  label=f'NLLS: χ2 = {ECM_NM_params.chi_square[i]}')
     ax.scatter(Z_real[i,:], Z_imag[i,:], color="black", label='measured')
 
     ax.set_xlabel("Z' [Ω]")

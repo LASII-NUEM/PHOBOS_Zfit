@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # spec_obj = file_utils.read('../data/17 - EIS ferro(III) 5,0e-6 - DC 0,6 V.csv', type="EIS")
 spec_obj= file_utils.read('../data/phobos_multielectrode.csv', type = "PHOBOS")
 
-freqs = spec_obj.Freq
+freqs = spec_obj.freq
 z_real = spec_obj.Z_real
 z_imag = -spec_obj.Z_imag #imaginary impedance is negative
 
