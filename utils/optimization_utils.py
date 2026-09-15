@@ -102,9 +102,7 @@ def NelderMeadSimplex(cost_fun, theta:np.ndarray, args=(), alfa=1, beta=2, gamma
             simplex = np.clip(simplex, 0, 10)
 
         #compute the cost at each vertex of the simplex
-        y = np.zeros(shape=(np.shape(simplex)[0],1))
-        for s_idx in range(0,len(y)):
-            y = cost_fun(simplex[s_idx,:], args)
+        y = np.array([cost_fun(vertex, args) for vertex in simplex])
 
         #stop criterion
         delta = np.std(y)
@@ -112,23 +110,23 @@ def NelderMeadSimplex(cost_fun, theta:np.ndarray, args=(), alfa=1, beta=2, gamma
             break
 
         h = np.argmax(y) #index of the maximum cost
-        yh = cost_fun(simplex[h,:][:,np.newaxis].T, args)
+        yh = cost_fun(simplex[h,:], args)
         y_idx_nH = y_idx!=h #mask to ensure i!=h in the comparison
         l = np.argmin(y) #index of the minimum cost
-        yl = cost_fun(simplex[l,:][:,np.newaxis].T, args) #update the cost at the lower bound
+        yl = cost_fun(simplex[l,:], args) #update the cost at the lower bound
         y_idx_cent = (y_idx!=h)&(y_idx!=l) #mask to detect second highest cost
         P_cent = np.mean(simplex[y_idx_nH], axis=0) #compute the centroid without h
         s = np.argmax(y[y_idx_cent]) #index of the second highest cost
-        y_s = cost_fun(simplex[s,:][:,np.newaxis].T, args)
+        y_s = cost_fun(simplex[s,:], args)
 
         #reflection
         P_r = P_cent + alfa*(P_cent-simplex[h,:])
-        y_r = cost_fun(P_r[:,np.newaxis].T, args)
+        y_r = cost_fun(P_r, args)
 
         #expansion
         if y_r < yl:
             P_e = P_cent + beta*(P_r-P_cent)
-            y_e = cost_fun(P_e[:,np.newaxis].T, args)
+            y_e = cost_fun(P_e, args)
             if y_e < y_r:
                 simplex[h,:] = P_e
             elif y_e >= y_r:
@@ -140,11 +138,11 @@ def NelderMeadSimplex(cost_fun, theta:np.ndarray, args=(), alfa=1, beta=2, gamma
                 simplex[h,:] = P_r
 
             P_c = P_cent + gamma*(simplex[h,:]-P_cent)
-            y_c = cost_fun(P_c[:,np.newaxis].T, args)
+            y_c = cost_fun(P_c, args)
 
             if y_c > yh:
                 simplex[y_idx_cent,:] = 0.5*(simplex[y_idx_cent,:]+simplex[l, :])
-                y = cost_fun(simplex, args)
+                y = np.array([cost_fun(vertex, args) for vertex in simplex])
 
             elif y_c <= yh:
                 simplex[h,:] = P_c
@@ -207,7 +205,12 @@ def ParticleSwarm(cost_fun, n, args=(), method='gbest', swarm_size=50, c1=2, c2=
     #randomly generate the positions and velocities of the swarm
     bounds = (0,10)
     swarm_positions = np.random.uniform(bounds[0], bounds[1], size=(swarm_size, n)) #array to store the positions
-    swarm_costs = cost_fun(swarm_positions, args) #compute the cost for the current particles
+
+    #compute the cost for the current particles
+    swarm_costs = np.zeros(shape=(swarm_size,))
+    for cost_idx in range(0,len(swarm_costs)):
+        swarm_costs[cost_idx] = cost_fun(swarm_positions[cost_idx,:], args)
+
     swarm_velocities = np.random.uniform(bounds[0], bounds[1], size=(swarm_size, n)) #array to store the positions
     P_best = np.copy(swarm_positions) #the best position found by each particle
     cost_P_best = np.copy(swarm_costs) #the cost at the best position found by each particle
@@ -234,7 +237,11 @@ def ParticleSwarm(cost_fun, n, args=(), method='gbest', swarm_size=50, c1=2, c2=
 
         swarm_positions += swarm_velocities #update the positions given the velocity
         swarm_positions = np.clip(swarm_positions, bounds[0], bounds[1]) #respect the bounds
-        swarm_costs = cost_fun(swarm_positions, args) #update the costs
+
+        #update the costs
+        for cost_idx in range(0, swarm_size):
+            swarm_costs[cost_idx] = cost_fun(swarm_positions[cost_idx,:], args)
+
         cost_mask = swarm_costs<cost_P_best #find where the new positions return the better costs
         P_best[cost_mask] = swarm_positions[cost_mask] #update the best positions
         cost_P_best[cost_mask] = swarm_costs[cost_mask] #update the best costs

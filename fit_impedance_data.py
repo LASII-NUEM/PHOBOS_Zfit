@@ -57,7 +57,7 @@ plt.show()
 #_______________________________________________________________________________________________________________________
 # Validate EIS data - by Linear Krammers Kroning
 
-linkk_obj = linKK.LinearKramersKronig(spec_obj, c=0.1, max_iter=50, add_capacitor=True, verbose=True)
+linkk_obj = linKK.LinearKramersKronig(spec_obj, c=0.5, max_iter=100, add_capacitor=True, verbose=True)
 if linkk_obj.chi_square > 1e-2:
     raise ValueError(f'Linear Kramers-Kronig test failed: x² = {linkk_obj.chi_square}')
 
@@ -77,28 +77,23 @@ print(ECM_Params.param_names[:])
 # method = "BFGS" or "NLLS"
 
 ECM_fit = fitting_utils.Circuit_fitting(spec_obj,freqs,ECM_Params)
-
+method = 'Nelder-Mead'
 initial_params = np.array([1,1,1,0.5,1,1,0.5]) #initial guess for the fitting routine
 scaling_array = np.array([[1e3, 1e2, 1e-4, 1, 1e3, 1e-4, 1],
                          [1e3, 1e3, 1e-6, 1, 1e4, 1e-1, 1],
                          [1e3, 1e3, 1e-5, 1, 1e3, 1e-3, 1],
                          [1e3, 1e3, 1e-6, 1, 1e3, 1e-5, 1]])
 
-ECM_BFGS_params = ECM_fit.fit_circuit(initial_params, scaling_array, method="BFGS", verbose=False)
-ECM_NM_params = ECM_fit.fit_circuit(initial_params, scaling_array, method="Nelder-Mead", verbose=False)
+ECM_BFGS_params = ECM_fit.fit_circuit(initial_params, scaling_array, method=method, verbose=True)
 
 #________________________
 # Plot fitting result
-
 Z_bfgs = ECM_BFGS_params.opt_fit
-Z_nlls = ECM_NM_params.opt_fit
 
 for i in range(len(Z_real[:,0])):
     fig, ax = plt.subplots(figsize=(12,10))
-    plt.title(f'[Nyquist] BFGS/NLLS Fit: {spec_obj.sheet_names[i]}')
-
-    ax.plot(Z_bfgs[i].Z_ECM.real, -Z_bfgs[i].Z_ECM.imag, color="blue", label=f'BFGS: χ2 = {ECM_BFGS_params.chi_square[i]}')
-    ax.plot(Z_nlls[i].Z_ECM.real, -Z_nlls[i].Z_ECM.imag, color="red",  label=f'NLLS: χ2 = {ECM_NM_params.chi_square[i]}')
+    plt.title(f'[Nyquist] {method} Fit: {spec_obj.sheet_names[i]}')
+    ax.plot(Z_bfgs[i].Z_ECM.real, -Z_bfgs[i].Z_ECM.imag, color="blue", label=f'{method}: χ2 = {ECM_BFGS_params.chi_square[i]}')
     ax.scatter(Z_real[i,:], Z_imag[i,:], color="black", label='measured')
 
     ax.set_xlabel("Z' [Ω]")

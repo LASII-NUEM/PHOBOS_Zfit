@@ -104,8 +104,8 @@ class Circuit_fitting:
                     print(f'MAE = {mae}')
                     fit_params = self.ecm.param_names
                     print(f'fitted params = ')
-                    for i in range(len(fit_params)):
-                        print(f'{fit_params[i]} = {opt_params_scaled[i]}')
+                    for p in range(len(fit_params)):
+                        print(f'{fit_params[p]} = {opt_params_scaled[p]}')
                     print()
 
                 self.fit_method_reponse.append(min_obj)
@@ -126,7 +126,7 @@ class Circuit_fitting:
                                     mae_score=self.error_MAE,
                                     n_iter= self.inter_num, t_elapsed=self.fit_elapsed_time)  # return the optimized parameters
 
-        if self.fit_method == "BFGS-classic":
+        elif self.fit_method == "BFGS-classic":
             for i in range(Z_meas_arr.shape[0]):
                 z_raw = Z_meas_arr[i, :]
                 t_init = time.time()
@@ -150,8 +150,8 @@ class Circuit_fitting:
                     print(f'MAE = {mae}')
                     fit_params = self.ecm.param_names
                     print(f'fitted params = ')
-                    for i in range(len(fit_params)):
-                        print(f'{fit_params[i]} = {opt_params_scaled[i]}')
+                    for p in range(len(fit_params)):
+                        print(f'{fit_params[p]} = {opt_params_scaled[p]}')
                     print()
 
                 self.fit_method_reponse.append(min_obj)
@@ -199,8 +199,8 @@ class Circuit_fitting:
                     print(f'MAE = {mae}')
                     fit_params = self.ecm.param_names
                     print(f'fitted params = ')
-                    for i in range(len(fit_params)):
-                        print(f'{fit_params[i]} = {opt_params_scaled[i]}')
+                    for p in range(len(fit_params)):
+                        print(f'{fit_params[p]} = {opt_params_scaled[p]}')
                     print()
 
                 self.fit_method_reponse.append(ls_obj)
@@ -225,8 +225,7 @@ class Circuit_fitting:
                                    args=([z_raw.astype('complex'), self.freqs, scaling_array[i, :]]),
                                    tol=tol, bounds=bounds)
                 t_elapsed = time.time() - t_init
-                opt_fit = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, min_obj, scaling_array[i, :],
-                                                    verbose=False)
+                opt_fit = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, min_obj, scaling_array[i, :], verbose=False)
                 Z_fit = opt_fit.Z_ECM
                 opt_params_scaled = min_obj * scaling_array[i, :] #rescale the minimized parameters
                 nmse = self.NMSE(z_raw.astype("complex"), Z_fit.astype('complex')) #NMSE score for both complex parts
@@ -244,8 +243,8 @@ class Circuit_fitting:
                     print(f'MAE = {mae}')
                     fit_params = self.ecm.param_names
                     print(f'fitted params = ')
-                    for i in range(len(fit_params)):
-                        print(f'{fit_params[i]} = {opt_params_scaled[i]}')
+                    for p in range(len(fit_params)):
+                        print(f'{fit_params[p]} = {opt_params_scaled[p]}')
                     print()
 
                 self.fit_method_reponse.append(min_obj)
@@ -266,7 +265,80 @@ class Circuit_fitting:
                                                        opt_fit=self.opt_fitting, nmse_score=self.error_NMSE,
                                                        nrmse_score=self.error_NRMSE, chi_square=self.error_CHISQR,
                                                        mae_score=self.error_MAE,
+                                                       n_iter=self.inter_num,
                                                        t_elapsed=self.fit_elapsed_time)  # return the optimized parameters
+
+        elif self.fit_method == "PSO":
+            # compute 100 independent runs to yield the best fit through particle swarm
+            # Note: this is a strategy to bypass PSO's randomness
+            # Wang S-C, Liu Y-H. Research on Two-Stage Parameter Identification for Various Lithium-Ion Battery Models Using Bio-Inspired Optimization Algorithms.
+            # Applied Sciences. 2026; 16(1):202. https://doi.org/10.3390/app16010202
+            n_runs = 100
+
+            for i in range(Z_meas_arr.shape[0]):
+                z_raw = Z_meas_arr[i, :]
+                t_init = time.time()
+                best_obj = None #variable to store the 'fit_obj' with the best accuracy
+                best_nmse = 10 #variable to store the best nmse
+                best_chisqr = 10 #variable to store the best chi-square
+
+                for j in range(0,n_runs):
+                    min_obj = optimization_utils.ParticleSwarm(self.CUMSE, len(self.ecm.param_names), swarm_size=50, method='lbest',
+                                                               args=([z_raw.astype('complex'), self.freqs, scaling_array[i,:]]), tol=tol, bounds=bounds)
+                    opt_fit = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, min_obj, scaling_array[i, :], verbose=False)
+                    nmse = self.NMSE(z_raw.astype("complex"), opt_fit.Z_ECM.astype('complex')) #NMSE score for both complex parts
+                    chisqr = self.chi_square(z_raw.astype("complex"), opt_fit.Z_ECM.astype('complex')) #chi-square score for both complex parts
+
+                    #update the variables if a new best has been achieved
+                    if (nmse < best_nmse) & (chisqr < best_chisqr):
+                        best_obj = min_obj
+                        best_nmse = nmse
+                        best_chisqr = chisqr
+
+                t_elapsed = time.time() - t_init
+                best_fit = ECM_utils.CircuitEvaluate(self.freqs, self.ecm, best_obj, scaling_array[i,:], verbose=False)
+                Z_fit = best_fit.Z_ECM
+                opt_params_scaled = best_obj*scaling_array[i,:] #rescale the minimized parameters
+                nmse = self.NMSE(z_raw.astype("complex"), Z_fit.astype('complex')) #NMSE score for both complex parts
+                nrmse = self.NRMSE(z_raw.astype("complex"), Z_fit.astype('complex')) #nrmse score for both complex parts
+                chisqr = self.chi_square(z_raw.astype("complex"), Z_fit.astype('complex')) #chi-square score for both complex parts
+                mae = self.MAE(z_raw.astype("complex"), Z_fit.astype('complex')) #mae score for both complex parts
+
+                if verbose:
+                    print(f'[EquivalentCircuit] PSO-based impedance fitting:')
+                    print(f'Test name: {self.data_medium.sheet_names[i]}')
+                    print(f't = {t_elapsed} s')
+                    print(f'NMSE = {nmse}')
+                    print(f'NRMSE = {nrmse}')
+                    print(f'chi-square = {chisqr}')
+                    print(f'MAE = {mae}')
+                    fit_params = self.ecm.param_names
+                    print(f'fitted params = ')
+                    for p in range(len(fit_params)):
+                        print(f'{fit_params[p]} = {opt_params_scaled[p]}')
+                    print()
+
+                self.fit_method_reponse.append(best_obj)
+                self.opt_params.append(best_obj)
+                self.opt_scaled_params.append(opt_params_scaled)
+                self.opt_cost.append(self.CUMSE(best_obj, args=([z_raw.astype('complex'), self.freqs, scaling_array[i,:]])))
+                self.opt_fitting.append(best_fit)
+                self.error_NMSE.append(nmse)
+                self.error_NRMSE.append(nrmse)
+                self.error_CHISQR.append(chisqr)
+                self.error_MAE.append(mae)
+                self.inter_num.append(n_runs)
+                self.fit_elapsed_time.append(t_elapsed)
+
+            return optimization_utils.OptimizerResults(fit_result=self.fit_method_reponse, opt_params=self.opt_params,
+                                                       opt_params_scaled=self.opt_scaled_params,
+                                                       opt_cost=self.opt_cost,
+                                                       opt_fit=self.opt_fitting, nmse_score=self.error_NMSE,
+                                                       nrmse_score=self.error_NRMSE, chi_square=self.error_CHISQR,
+                                                       mae_score=self.error_MAE,
+                                                       n_iter=self.inter_num,
+                                                       t_elapsed=self.fit_elapsed_time)  # return the optimized parameters
+
         else:
             raise ValueError(f'[EquivalentCircuit] method = {method} not implemented! Try: {valid_methods}')
 
