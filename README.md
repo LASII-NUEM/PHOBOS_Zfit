@@ -1,4 +1,4 @@
-# PHOBOS ZFit - EIS Fitting Framework
+# PHOBOS.Fit - BackEnd Framework
 
 **Equivalent Circuit Model fitting for EIS data — Powered by LASII**
 
