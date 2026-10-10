@@ -12,3 +12,7 @@ numpy
 pandas
 scipy
 openpyxl
+
+flask
+flask-cors
+gunicorn
