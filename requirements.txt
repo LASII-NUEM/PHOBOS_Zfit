@@ -8,11 +8,12 @@
 sympy
 impedance
 matplotlib
-numpy
-pandas
-scipy
-openpyxl
 
-flask
-flask-cors
-gunicorn
+flask>=3.0.0
+flask-cors>=4.0.0
+gunicorn>=21.2.0
+numpy>=1.24.0
+scipy>=1.11.0
+pandas>=2.0.0
+openpyxl>=3.1.0
+werkzeug>=3.0.0
